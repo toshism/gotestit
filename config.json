@@ -1,0 +1,16 @@
+[
+    {
+        "name": "Example One",
+        "base_dir": "/home/toshism/projects/example/",
+        "test_dir": "/home/toshism/projects/example/tests/",
+        "code_dir": "/home/toshism/projects/example/src/",
+        "test_runner": "/home/toshism/.virtualenvs/example/bin/nosetests"
+    },
+    {
+        "name": "Second Project",
+        "base_dir": "/home/toshism/projects/second/",
+        "test_dir": "/home/toshism/projects/second/tests/",
+        "code_dir": "/home/toshism/projects/second/src/",
+        "test_runner": "/home/toshism/.virtualenvs/second/bin/nosetests"
+    }
+]
