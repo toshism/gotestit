@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/rjeczalik/notify"
@@ -59,16 +58,11 @@ func (w WatchGroup) runTest(testPath string) {
 	fmt.Printf("Running test: %s\n", testPath)
 	cmd := exec.Command(w.TestRunner, testPath)
 	cmd.Dir = w.BaseDir
-
-	var out bytes.Buffer
-	// nose prints everything to stderr?
-	cmd.Stderr = &out
+	cmd.Stderr = os.Stdout
+	cmd.Stdout = os.Stdout
 	if err := cmd.Run(); err != nil {
 		log.Fatal(err)
 	}
-	// it would be cooler to stream the test result out put. see below
-	// https://nathanleclaire.com/blog/2014/12/29/shelled-out-commands-in-golang/
-	fmt.Printf(out.String())
 }
 
 func (w WatchGroup) waitForTests(c chan ChangedFile) {
