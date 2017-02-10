@@ -84,7 +84,7 @@ func main() {
 	var ws []WatchGroup
 	ws, _ = loadConfig(configFile)
 
-	chFiles := make(chan ChangedFile)
+	chFiles := make(chan ChangedFile, 10)
 
 	for _, w := range ws {
 		go w.waitForTests(chFiles)
