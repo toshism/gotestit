@@ -8,11 +8,12 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"os/user"
 	"path/filepath"
 )
 
 // location of the config file
-var configFile = "config.json"
+var configFile = ".gowatchit.json"
 
 // the file extension to monitor for changes
 // all other files will be ignored
@@ -29,6 +30,14 @@ type WatchGroup struct {
 type ChangedFile struct {
 	wg   *WatchGroup
 	path string
+}
+
+func getConfigPath() (configPath string) {
+	usr, err := user.Current()
+	if err != nil {
+		log.Fatal(err)
+	}
+	return filepath.Join(usr.HomeDir, configFile)
 }
 
 func loadConfig(filename string) (watchGroups []WatchGroup, err error) {
@@ -82,7 +91,7 @@ func (w WatchGroup) waitForTests(c chan ChangedFile) {
 
 func main() {
 	var ws []WatchGroup
-	ws, _ = loadConfig(configFile)
+	ws, _ = loadConfig(getConfigPath())
 
 	chFiles := make(chan ChangedFile, 10)
 
