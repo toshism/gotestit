@@ -14,3 +14,7 @@ Works for me...
 - I've only used it with nose test runner.
 - It expects tests to be name `test_` followed by the filename the test covers.
 - It does not expect any specific directory structure.
+
+## Setup
+config file: `~/.gowatchit.json`
+see `gowatchit.json` for an example
