@@ -69,9 +69,7 @@ func (w WatchGroup) runTest(testPath string) {
 	cmd.Dir = w.BaseDir
 	cmd.Stderr = os.Stdout
 	cmd.Stdout = os.Stdout
-	if err := cmd.Run(); err != nil {
-		log.Fatal(err)
-	}
+	cmd.Run()
 }
 
 func (w WatchGroup) waitForTests(c chan ChangedFile) {
