@@ -16,5 +16,5 @@ Works for me...
 - It does not expect any specific directory structure.
 
 ## Setup
-config file: `~/.gowatchit.json`
-see `gowatchit.json` for an example
+config file: `~/.gotestit.json`
+see `gotestit.json` for an example
