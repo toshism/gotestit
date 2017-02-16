@@ -13,7 +13,7 @@ import (
 )
 
 // location of the config file
-var configFile = ".gowatchit.json"
+var configFile = ".gotestit.json"
 
 // the file extension to monitor for changes
 // all other files will be ignored
