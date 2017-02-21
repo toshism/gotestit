@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"os/user"
 	"path/filepath"
+	"strings"
 )
 
 // location of the config file
@@ -99,7 +100,16 @@ func main() {
 
 	for c := range chFiles {
 		if filepath.Ext(c.path) == fileExt {
-			fileList, _ := findTest(c.wg.TestDir, "test_"+filepath.Base(c.path))
+			isTest := strings.HasPrefix(filepath.Base(c.path), "test_")
+
+			var fileList []string
+
+			if !isTest {
+				fileList, _ = findTest(c.wg.TestDir, "test_"+filepath.Base(c.path))
+			} else {
+				fileList = []string{c.path}
+			}
+
 			if len(fileList) > 0 {
 				for _, f := range fileList {
 					c.wg.runTest(f)
