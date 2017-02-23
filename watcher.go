@@ -70,7 +70,12 @@ func (w WatchGroup) runTest(testPath string) {
 	cmd.Dir = w.BaseDir
 	cmd.Stderr = os.Stdout
 	cmd.Stdout = os.Stdout
-	cmd.Run()
+	err := cmd.Run()
+	if err != nil {
+		test_file := filepath.Base(testPath)
+		send_notify := exec.Command("/usr/bin/notify-send", "-u", "critical", "-t", "3000", "FAIL: "+test_file)
+		send_notify.Run()
+	}
 }
 
 func (w WatchGroup) waitForTests(c chan ChangedFile) {
