@@ -72,7 +72,7 @@ func (w WatchGroup) runTest(testPath string) {
 	cmd.Stdout = os.Stdout
 	err := cmd.Run()
 	if err != nil {
-		failMessage := fmt.Sprintf("FAIL: %s", filepath.Base(testPath))
+		failMessage := fmt.Sprintf("GOTESTIT FAIL:\n%s", filepath.Base(testPath))
 		sendNotify := exec.Command("/usr/bin/notify-send", "-u", "critical", "-t", "3000", failMessage)
 		sendNotify.Run()
 	}
