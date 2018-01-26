@@ -87,7 +87,7 @@ func (w WatchGroup) waitForTests(c chan ChangedFile) {
 	watchDir := w.CodeDir + "..."
 
 	evChan := make(chan notify.EventInfo)
-	if err := notify.Watch(watchDir, evChan, notify.Write); err != nil {
+	if err := notify.Watch(watchDir, evChan, notify.InCloseWrite, notify.InMovedTo); err != nil {
 		log.Fatal(err)
 	}
 
