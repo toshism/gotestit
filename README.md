@@ -6,7 +6,7 @@ with ruby version requirements to test a python project.
 
 Also I just wanted to play around with Go.
 
-*Update:* I've been using this for a fair amount of time now and it's actually
+**Update:** I've been using this for a fair amount of time now and it's actually
 pretty solid.
 
 Supports watching multiple projects simultaneously.
@@ -14,7 +14,7 @@ Supports watching multiple projects simultaneously.
 ## Current status
 Works for me... 
 
-- +I've only used it with nose test runner.+ Works with nose and pytest
+- ~I've only used it with nose test runner.~ Works with nose and pytest
 - It expects tests to be name `test_` followed by the filename the test covers.
 - It does not expect any specific directory structure.
 
