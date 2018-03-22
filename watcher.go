@@ -1,24 +1,19 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/rjeczalik/notify"
-	"io/ioutil"
+	"github.com/spf13/viper"
 	"log"
 	"os"
 	"os/exec"
-	"os/user"
 	"path/filepath"
 	"strings"
 )
 
-// location of the config file
-var configFile = ".gotestit.json"
-
-// the file extension to monitor for changes
-// all other files will be ignored
-var fileExt = ".py"
+var ws []WatchGroup
+var fileExt string
+var testRegex string
 
 type WatchGroup struct {
 	BaseDir    string `json:"base_dir"`
@@ -31,23 +26,6 @@ type WatchGroup struct {
 type ChangedFile struct {
 	wg   *WatchGroup
 	path string
-}
-
-func getConfigPath() (configPath string) {
-	usr, err := user.Current()
-	if err != nil {
-		log.Fatal(err)
-	}
-	return filepath.Join(usr.HomeDir, configFile)
-}
-
-func loadConfig(filename string) (watchGroups []WatchGroup, err error) {
-	bytes, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return
-	}
-	err = json.Unmarshal(bytes, &watchGroups)
-	return
 }
 
 func findTest(testDir string, filename string) (fileList []string, err error) {
@@ -97,10 +75,43 @@ func (w WatchGroup) waitForTests(c chan ChangedFile) {
 	defer notify.Stop(evChan)
 }
 
-func main() {
-	var ws []WatchGroup
-	ws, _ = loadConfig(getConfigPath())
+func getStringConfig(key string, v map[interface{}]interface{}) string {
+	value, ok := v[key].(string)
+	if ok == false {
+		panic(fmt.Errorf("Missing required config value: %s \n", key))
+	}
+	return value
+}
 
+func init() {
+	viper.SetConfigName("gotestit")
+	viper.AddConfigPath("$HOME/.config")
+	viper.AddConfigPath("$HOME")
+	viper.AddConfigPath(".")
+	err := viper.ReadInConfig()
+	if err != nil {
+		panic(fmt.Errorf("Fatal error config file: %s \n", err))
+	}
+
+	fileExt = viper.GetString("watch_extension")
+	testRegex = viper.GetString("test_regex")
+
+	te := viper.Get("projects")
+	test, _ := te.([]interface{})
+	for _, value := range test {
+		v, _ := value.(map[interface{}]interface{})
+		wg := WatchGroup{
+			BaseDir:    getStringConfig("base_dir", v),
+			CodeDir:    getStringConfig("code_dir", v),
+			TestDir:    getStringConfig("test_dir", v),
+			TestRunner: getStringConfig("test_runner", v),
+			Name:       getStringConfig("name", v),
+		}
+		ws = append(ws, wg)
+	}
+}
+
+func main() {
 	chFiles := make(chan ChangedFile, 10)
 
 	for _, w := range ws {
