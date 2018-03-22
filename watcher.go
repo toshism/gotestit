@@ -8,12 +8,13 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
 
 var ws []WatchGroup
 var fileExt string
-var testRegex string
+var testRegexStr string
 
 type WatchGroup struct {
 	BaseDir    string `json:"base_dir"`
@@ -28,12 +29,23 @@ type ChangedFile struct {
 	path string
 }
 
+func filenameNoExt(s string) string {
+	s = filepath.Base(s)
+	n := strings.LastIndexByte(s, '.')
+	if n >= 0 {
+		return s[:n]
+	}
+	return s
+}
+
 func findTest(testDir string, filename string) (fileList []string, err error) {
 	err = filepath.Walk(testDir, func(path string, f os.FileInfo, walkErr error) error {
 		if walkErr != nil {
 			return walkErr
 		}
-		if filename == filepath.Base(path) {
+		testRegex_ := strings.Replace(testRegexStr, "<FILE>", filenameNoExt(filename), 1)
+		testRegex := regexp.MustCompile(testRegex_)
+		if testRegex.MatchString(filenameNoExt(path)) {
 			fileList = append(fileList, path)
 		}
 		return nil
@@ -88,13 +100,17 @@ func init() {
 	viper.AddConfigPath("$HOME/.config")
 	viper.AddConfigPath("$HOME")
 	viper.AddConfigPath(".")
+
+	// default config values
+	viper.SetDefault("test_regex", "<FILE>")
+
 	err := viper.ReadInConfig()
 	if err != nil {
 		panic(fmt.Errorf("Fatal error config file: %s \n", err))
 	}
 
 	fileExt = viper.GetString("watch_extension")
-	testRegex = viper.GetString("test_regex")
+	testRegexStr = viper.GetString("test_regex")
 
 	te := viper.Get("projects")
 	test, _ := te.([]interface{})
@@ -109,6 +125,7 @@ func init() {
 		}
 		ws = append(ws, wg)
 	}
+
 }
 
 func main() {
@@ -120,14 +137,15 @@ func main() {
 
 	for c := range chFiles {
 		if filepath.Ext(c.path) == fileExt {
-			isTest := strings.HasPrefix(filepath.Base(c.path), "test_")
-
 			var fileList []string
 
-			if !isTest {
-				fileList, _ = findTest(c.wg.TestDir, "test_"+filepath.Base(c.path))
-			} else {
+			if strings.HasPrefix(filepath.Dir(c.path), c.wg.TestDir) {
+				// if the saved file is in the test directory itself,
+				// assume it's a test and attempt to run it
 				fileList = []string{c.path}
+			} else {
+				// search for a test that matches the test_regex
+				fileList, _ = findTest(c.wg.TestDir, filepath.Base(c.path))
 			}
 
 			if len(fileList) > 0 {
