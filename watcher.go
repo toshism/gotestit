@@ -38,13 +38,23 @@ func filenameNoExt(s string) string {
 	return s
 }
 
-func findTest(testDir string, filename string) (fileList []string, err error) {
+func findTest(testDir string, path string) (fileList []string, err error) {
+	filename := filepath.Base(path)
+	// if the modified file is in the testDir path assume it's a test itself
+	// and return it.
+	if strings.HasPrefix(filepath.Dir(path), testDir) {
+		fileList = []string{path}
+		return
+	}
+
+	// replace the <FILE> placeholder in regex string with the actual file name
+	testRegex_ := strings.Replace(testRegexStr, "<FILE>", filenameNoExt(filename), 1)
+	testRegex := regexp.MustCompile(testRegex_)
+
 	err = filepath.Walk(testDir, func(path string, f os.FileInfo, walkErr error) error {
 		if walkErr != nil {
 			return walkErr
 		}
-		testRegex_ := strings.Replace(testRegexStr, "<FILE>", filenameNoExt(filename), 1)
-		testRegex := regexp.MustCompile(testRegex_)
 		if testRegex.MatchString(filenameNoExt(path)) {
 			fileList = append(fileList, path)
 		}
@@ -78,7 +88,7 @@ func (w WatchGroup) waitForTests(c chan ChangedFile) {
 
 	evChan := make(chan notify.EventInfo)
 	if err := notify.Watch(watchDir, evChan, notify.InCloseWrite, notify.InMovedTo); err != nil {
-		log.Fatal(err)
+		log.Fatalln(err)
 	}
 
 	for ev := range evChan {
@@ -90,7 +100,7 @@ func (w WatchGroup) waitForTests(c chan ChangedFile) {
 func getStringConfig(key string, v map[interface{}]interface{}) string {
 	value, ok := v[key].(string)
 	if ok == false {
-		panic(fmt.Errorf("Missing required config value: %s \n", key))
+		log.Fatalln(fmt.Errorf("Missing required config value: %s \n", key))
 	}
 	return value
 }
@@ -106,7 +116,7 @@ func init() {
 
 	err := viper.ReadInConfig()
 	if err != nil {
-		panic(fmt.Errorf("Fatal error config file: %s \n", err))
+		log.Fatalln(fmt.Errorf("Fatal error reading config file: %s \n", err))
 	}
 
 	fileExt = viper.GetString("watch_extension")
@@ -139,14 +149,7 @@ func main() {
 		if filepath.Ext(c.path) == fileExt {
 			var fileList []string
 
-			if strings.HasPrefix(filepath.Dir(c.path), c.wg.TestDir) {
-				// if the saved file is in the test directory itself,
-				// assume it's a test and attempt to run it
-				fileList = []string{c.path}
-			} else {
-				// search for a test that matches the test_regex
-				fileList, _ = findTest(c.wg.TestDir, filepath.Base(c.path))
-			}
+			fileList, _ = findTest(c.wg.TestDir, c.path)
 
 			if len(fileList) > 0 {
 				for _, f := range fileList {
