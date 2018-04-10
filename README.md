@@ -13,7 +13,7 @@ corresponding test file and run only those tests.
 * Supports watching multiple projects simultaneously
 * Regex for finding test files
 * Does not eat all of your resources (looking at you xdist)
-* Notification of pass/fail (currently linux only, using notify-send)
+* Notification of pass/fail
 * Only runs tests for the file you are editing*
 * Theoretically supports any language
 
