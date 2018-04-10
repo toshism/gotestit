@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/0xAX/notificator"
 	"github.com/rjeczalik/notify"
 	"github.com/spf13/viper"
 	"log"
@@ -15,6 +16,7 @@ import (
 var ws []WatchGroup
 var fileExt string
 var testRegexStr string
+var notifier *notificator.Notificator
 
 type WatchGroup struct {
 	BaseDir    string `json:"base_dir"`
@@ -72,13 +74,11 @@ func (w WatchGroup) runTest(testPath string) {
 	cmd.Stdout = os.Stdout
 	err := cmd.Run()
 	if err != nil {
-		failMessage := fmt.Sprintf("GOTESTIT FAIL:\n%s", filepath.Base(testPath))
-		sendNotify := exec.Command("/usr/bin/notify-send", "-u", "critical", "-t", "3000", failMessage)
-		sendNotify.Run()
+		failMessage := fmt.Sprintf("%s:\n%s", w.Name, filepath.Base(testPath))
+		notifier.Push("GOTESTIT FAIL", failMessage, "", notificator.UR_CRITICAL)
 	} else {
-		succMessage := fmt.Sprintf("GOTESTIT Pass:\n%s", filepath.Base(testPath))
-		sendNotify := exec.Command("/usr/bin/notify-send", "-h", "string:bgcolor:#00cc00", "-t", "3000", succMessage)
-		sendNotify.Run()
+		succMessage := fmt.Sprintf("%s:\n%s", w.Name, filepath.Base(testPath))
+		notifier.Push("GOTESTIT Pass", succMessage, "", notificator.UR_NORMAL)
 	}
 }
 
@@ -139,6 +139,11 @@ func init() {
 }
 
 func main() {
+	notifier = notificator.New(notificator.Options{
+		DefaultIcon: "icon/default.png",
+		AppName:     "GOTESTIT",
+	})
+
 	chFiles := make(chan ChangedFile, 10)
 
 	for _, w := range ws {
