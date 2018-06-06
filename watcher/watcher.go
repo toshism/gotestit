@@ -103,6 +103,29 @@ func getStringConfig(key string, v map[interface{}]interface{}) string {
 	return value
 }
 
+func RunTests(wg WatchGroup, forFiles []string) {
+	notifier = notificator.New(notificator.Options{
+		DefaultIcon: "icon/default.png",
+		AppName:     "GOTESTIT",
+	})
+
+	for _, f := range forFiles {
+		if filepath.Ext(f) == wg.WatchExtension {
+			var fileList []string
+
+			fileList, _ = FindTest(wg.TestDir, f, wg.TestRegex)
+
+			if len(fileList) > 0 {
+				for _, t := range fileList {
+					wg.runTest(t)
+				}
+			} else {
+				fmt.Printf("Couldn't find any tests for %s. You should write some.\n", f)
+			}
+		}
+	}
+}
+
 func Watch(ws []WatchGroup) {
 	notifier = notificator.New(notificator.Options{
 		DefaultIcon: "icon/default.png",

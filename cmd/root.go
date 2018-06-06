@@ -31,6 +31,7 @@ func init() {
 	cobra.OnInitialize(initConfig)
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.config/gotestit.yaml)")
+	rootCmd.PersistentFlags().StringVarP(&project, "project", "p", "", "Project")
 }
 
 // initConfig reads in config file and ENV variables if set.

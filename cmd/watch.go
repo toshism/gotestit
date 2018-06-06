@@ -16,7 +16,6 @@ var watchCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(watchCmd)
-	watchCmd.PersistentFlags().StringVarP(&project, "project", "p", "", "Project")
 }
 
 func NewWatchGroup(project string) watcher.WatchGroup {
