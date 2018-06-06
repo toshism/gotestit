@@ -1,10 +1,9 @@
-package main
+package watcher
 
 import (
 	"fmt"
 	"github.com/0xAX/notificator"
 	"github.com/rjeczalik/notify"
-	"github.com/spf13/viper"
 	"log"
 	"os"
 	"os/exec"
@@ -13,17 +12,16 @@ import (
 	"strings"
 )
 
-var ws []WatchGroup
-var fileExt string
-var testRegexStr string
 var notifier *notificator.Notificator
 
 type WatchGroup struct {
-	BaseDir    string `json:"base_dir"`
-	CodeDir    string `json:"code_dir"`
-	TestDir    string `json:"test_dir"`
-	TestRunner string `json:"test_runner"`
-	Name       string `json:"name"`
+	BaseDir        string `mapstructure:"base_dir"`
+	TestDir        string `mapstructure:"test_dir"`
+	CodeDir        string `mapstructure:"code_dir"`
+	TestRunner     string `mapstructure:"test_runner"`
+	Name           string `json:"name"`
+	TestRegex      string `mapstructure:"test_regex"`
+	WatchExtension string `mapstructure:"watch_extension"`
 }
 
 type ChangedFile struct {
@@ -40,7 +38,7 @@ func filenameNoExt(s string) string {
 	return s
 }
 
-func findTest(testDir string, path string) (fileList []string, err error) {
+func FindTest(testDir string, path string, testRegexStr string) (fileList []string, err error) {
 	filename := filepath.Base(path)
 	// if the modified file is in the testDir path assume it's a test itself
 	// and return it.
@@ -105,40 +103,7 @@ func getStringConfig(key string, v map[interface{}]interface{}) string {
 	return value
 }
 
-func init() {
-	viper.SetConfigName("gotestit")
-	viper.AddConfigPath("$HOME/.config")
-	viper.AddConfigPath("$HOME")
-	viper.AddConfigPath(".")
-
-	// default config values
-	viper.SetDefault("test_regex", "<FILE>")
-
-	err := viper.ReadInConfig()
-	if err != nil {
-		log.Fatalln(fmt.Errorf("Fatal error reading config file: %s \n", err))
-	}
-
-	fileExt = viper.GetString("watch_extension")
-	testRegexStr = viper.GetString("test_regex")
-
-	te := viper.Get("projects")
-	test, _ := te.([]interface{})
-	for _, value := range test {
-		v, _ := value.(map[interface{}]interface{})
-		wg := WatchGroup{
-			BaseDir:    getStringConfig("base_dir", v),
-			CodeDir:    getStringConfig("code_dir", v),
-			TestDir:    getStringConfig("test_dir", v),
-			TestRunner: getStringConfig("test_runner", v),
-			Name:       getStringConfig("name", v),
-		}
-		ws = append(ws, wg)
-	}
-
-}
-
-func main() {
+func Watch(ws []WatchGroup) {
 	notifier = notificator.New(notificator.Options{
 		DefaultIcon: "icon/default.png",
 		AppName:     "GOTESTIT",
@@ -151,10 +116,10 @@ func main() {
 	}
 
 	for c := range chFiles {
-		if filepath.Ext(c.path) == fileExt {
+		if filepath.Ext(c.path) == c.wg.WatchExtension {
 			var fileList []string
 
-			fileList, _ = findTest(c.wg.TestDir, c.path)
+			fileList, _ = FindTest(c.wg.TestDir, c.path, c.wg.TestRegex)
 
 			if len(fileList) > 0 {
 				for _, f := range fileList {
